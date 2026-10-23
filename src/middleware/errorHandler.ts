@@ -11,6 +11,7 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  if (err.name === "ValidationError") res.status(400);
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   res.status(statusCode).json({
     success: false,

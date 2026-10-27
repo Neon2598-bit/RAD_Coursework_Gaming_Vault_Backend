@@ -35,6 +35,11 @@ export const protect = asyncHandler<AuthRequest>(async (req, res, next) => {
     throw new Error("Not authorized, user no longer exists");
   }
 
+  if (user.isDeleted) {
+    res.status(401);
+    throw new Error("This account has been deactivated. Log in again to reactivate it.");
+  }
+
   req.user = user;
   next();
 });

@@ -9,6 +9,8 @@ export interface IUser extends Document {
   password: string;
   role: Role;
   refreshToken?: string;
+  isDeleted: boolean;
+  deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidate: string): Promise<boolean>;
@@ -20,7 +22,7 @@ const userSchema = new Schema<IUser>(
     email: {
       type: String,
       required: [true, "Email is required"],
-      unique: true, // creates a unique index in MongoDB
+      unique: true,
       lowercase: true,
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
@@ -33,6 +35,8 @@ const userSchema = new Schema<IUser>(
     },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     refreshToken: { type: String, select: false },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
   },
   { timestamps: true }
 );

@@ -4,6 +4,7 @@ import { env } from "./config/env";
 import { notFound, errorHandler } from "./middleware/errorHandler";
 import authRoutes from "./routes/authRoutes";
 import gameRoutes from "./routes/gameRoutes";
+import reviewRoutes from "./routes/reviewRoutes";
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.get("/api/health", (req: Request, res: Response) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/games", gameRoutes);
+app.use("/api", reviewRoutes); 
 
 app.use(notFound);
 app.use(errorHandler);

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import User, { IUser } from "../models/User";
+import Review from "../models/Review";
 import { asyncHandler } from "../utils/asyncHandler";
 import { signAccessToken, signRefreshToken } from "../utils/generateTokens";
 import { AuthRequest } from "../middleware/authMiddleware";
@@ -27,7 +28,11 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   const exists = await User.findOne({ email: email.toLowerCase() });
   if (exists) {
     res.status(409);
-    throw new Error("Email is already registered");
+    throw new Error(
+      exists.isDeleted
+        ? "This email belongs to a deactivated account. Log in to reactivate it."
+        : "Email is already registered"
+    );
   }
 
   const user = await User.create({ name, email, password });
@@ -59,6 +64,17 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     throw new Error("Invalid email or password");
   }
 
+  let message = "Logged in successfully";
+  if (user.isDeleted) {
+    await Review.updateMany(
+      { user: user._id, isDeleted: true, deletedAt: user.deletedAt },
+      { $set: { isDeleted: false }, $unset: { deletedAt: 1 } }
+    );
+    user.isDeleted = false;
+    user.deletedAt = undefined;
+    message = "Welcome back! Your account has been reactivated.";
+  }
+
   const accessToken = signAccessToken(user.id, user.role);
   const refreshToken = signRefreshToken(user.id);
   user.refreshToken = refreshToken;
@@ -66,7 +82,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(200).json({
     success: true,
-    message: "Logged in successfully",
+    message,
     data: { user: publicUser(user), accessToken, refreshToken },
   });
 });
@@ -88,7 +104,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const user = await User.findById(decoded.id).select("+refreshToken");
-  if (!user || user.refreshToken !== refreshToken) {
+  if (!user || user.isDeleted || user.refreshToken !== refreshToken) {
     res.status(401);
     throw new Error("Refresh token is not valid, please log in again");
   }
@@ -104,4 +120,23 @@ export const logout = asyncHandler<AuthRequest>(async (req, res) => {
 
 export const getMe = asyncHandler<AuthRequest>(async (req, res) => {
   res.status(200).json({ success: true, data: { user: publicUser(req.user!) } });
+});
+
+export const deleteMe = asyncHandler<AuthRequest>(async (req, res) => {
+  const userId = req.user!._id;
+  const now = new Date();
+
+  await User.findByIdAndUpdate(userId, {
+    $set: { isDeleted: true, deletedAt: now },
+    $unset: { refreshToken: 1 },
+  });
+  await Review.updateMany(
+    { user: userId, isDeleted: { $ne: true } },
+    { $set: { isDeleted: true, deletedAt: now } }
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Account deactivated. Log in again at any time to reactivate it.",
+  });
 });

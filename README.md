@@ -4,9 +4,9 @@ REST API for **GameVault**, a game review and backlog tracker. Users can browse 
 
 Built for the **ITS2020 Rapid Application Development** final coursework (individual project).
 
-- **Frontend repository:** `<add frontend repo link>`
-- **Live API:** `<add Render URL>` (health check: `<add Render URL>/api/health`)
-- **Live frontend:** `<add Vercel URL>`
+- **Frontend repository:** `https://github.com/Neon2598-bit/RAD_Coursework_Gaming_Vault_Frontend.git`
+- **Live API:** `https://rad-coursework-gaming-vault-backend.onrender.com/` (health check: `https://rad-coursework-gaming-vault-backend.onrender.com/api/health`)
+- **Live frontend:** `https://rad-coursework-gaming-vault-fronten.vercel.app/`
 
 > The free Render plan puts the service to sleep after 15 minutes without traffic, so the first request after a pause can take up to a minute.
 
